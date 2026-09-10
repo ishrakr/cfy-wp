@@ -13,6 +13,10 @@ RUN pecl install redis \
 # Enable Apache rewrite support for WordPress permalinks.
 RUN a2enmod rewrite
 
+# Avoid Apache startup warnings when the container hostname is not resolvable.
+RUN printf '%s\n' 'ServerName localhost' > /etc/apache2/conf-available/servername.conf \
+    && a2enconf servername
+
 # /etc/cron.d entries require a user field after the schedule.
 RUN printf '%s\n' '*/5 * * * * www-data curl -fsS http://localhost/wp-cron.php?doing_wp_cron >/dev/null 2>&1' > /etc/cron.d/wp-cron \
     && chmod 0644 /etc/cron.d/wp-cron
