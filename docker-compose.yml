@@ -3,6 +3,8 @@ services:
   php:
     build: .
     restart: always
+    expose:
+      - "80"
     environment:
       WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_USER: ${WORDPRESS_DB_USER:?Set WORDPRESS_DB_USER in .env}
@@ -10,17 +12,15 @@ services:
       WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME:-wordpress}
     volumes:
       - ./html:/var/www/html
-      - ./custom.ini:/usr/local/etc/php/conf.d/custom.ini
     depends_on:
       db:
         condition: service_healthy
-      cache:
-        condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost/wp-login.php >/dev/null"]
+      test: ["CMD-SHELL", "php -r '$$s=@fsockopen(\"127.0.0.1\",80,$$e,$$m,2); if (!$$s) exit(1); mysqli_report(MYSQLI_REPORT_OFF); $$db=@new mysqli(getenv(\"WORDPRESS_DB_HOST\"),getenv(\"WORDPRESS_DB_USER\"),getenv(\"WORDPRESS_DB_PASSWORD\"),getenv(\"WORDPRESS_DB_NAME\")); exit($$db->connect_errno ? 1 : 0);'"]
       interval: 10s
       timeout: 5s
       retries: 12
+      start_period: 30s
 
   db:
     image: mariadb:10.11
@@ -42,31 +42,4 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
-
-  cache:
-    image: redis:7-alpine
-    restart: always
-    command: ["redis-server", "--maxmemory", "${REDIS_MAXMEMORY:-256mb}", "--maxmemory-policy", "allkeys-lru"]
-    volumes:
-      - ./redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-
-  nginx:
-    build:
-      context: .
-      dockerfile: nginx.Dockerfile
-    restart: always
-    expose:
-      - "80"
-    depends_on:
-      php:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/wp-admin/setup-config.php"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
+      start_period: 30s

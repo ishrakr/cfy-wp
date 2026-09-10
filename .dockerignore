@@ -1,0 +1,7 @@
+.git
+.env
+html
+mysql_data
+redis_data
+*.swp
+.DS_Store

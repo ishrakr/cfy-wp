@@ -1,9 +1,17 @@
 # cfy-wp
 
-## Start the stack
+## Deploy with Coolify
 
-1. Copy `.env.example` to `.env` and replace every placeholder password.
-2. Start the services with `docker compose up -d --build`.
-3. Open `http://localhost` and complete the WordPress installer.
+1. Configure the variables from `.env.example` in Coolify with unique passwords.
+2. Assign the domain to the `php` service on port `80`.
+3. Deploy the Compose application and complete the WordPress installer.
 
-Nginx is the public entry point on the internal Compose network. Configure the deployment platform's application proxy or ingress to route to the `nginx` service on port 80. Apache/WordPress, MariaDB, and Redis remain internal. WordPress files, database state, and Redis state are persisted in the ignored `html/`, `mysql_data/`, and `redis_data/` directories.
+Coolify terminates TLS and routes directly to WordPress/Apache. No service publishes a host port. WordPress and MariaDB state remain in the existing `html/` and `mysql_data/` application storage paths so upgrades preserve data created by earlier revisions.
+
+## Local validation
+
+Create `.env` from `.env.example`, then run `docker compose up -d --build`. The production Compose file intentionally has no host port binding; use a local override if browser access is required.
+
+Database environment variables initialize only a new database volume. Changing credentials later requires updating the MariaDB user and WordPress configuration together.
+
+If upgrading an existing deployment created with the original defaults, keep its established database values (`wp_user`, `wp_password`, `wordpress`, and `root_password`) for the first successful deployment. Rotate them afterward with explicit MariaDB user/password changes; changing Coolify variables alone does not update an existing database volume.
