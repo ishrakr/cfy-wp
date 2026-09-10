@@ -1,0 +1,10 @@
+.env
+
+# Container-managed application and database state
+/html/
+/mysql_data/
+/redis_data/
+
+# Local tooling and OS files
+.DS_Store
+*.swp
