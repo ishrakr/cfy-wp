@@ -68,6 +68,8 @@ services:
       context: .
       dockerfile: nginx.Dockerfile
     restart: always
+    expose:
+      - "80"
     depends_on:
       php:
         condition: service_healthy
