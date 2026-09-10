@@ -1,5 +1,7 @@
 FROM wordpress:php8.5-apache
 
+EXPOSE 80
+
 # Install the process tools used by the WordPress cron job and Redis extension.
 RUN apt-get update && apt-get install -y \
     cron \
