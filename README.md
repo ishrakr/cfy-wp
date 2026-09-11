@@ -8,6 +8,8 @@
 
 Coolify terminates TLS and routes directly to WordPress/Apache. No service publishes a host port. WordPress and MariaDB state remain in the existing `html/` and `mysql_data/` application storage paths so upgrades preserve data created by earlier revisions.
 
+Redis is available as the internal `cache` service for optional use by WordPress plugins.
+
 ## Local validation
 
 Create `.env` from `.env.example`, then run `docker compose up -d --build`. The production Compose file intentionally has no host port binding; use a local override if browser access is required.

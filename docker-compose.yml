@@ -16,20 +16,19 @@ services:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "php -r '$$s=@fsockopen(\"127.0.0.1\",80,$$e,$$m,2); if (!$$s) exit(1); mysqli_report(MYSQLI_REPORT_OFF); $$db=@new mysqli(getenv(\"WORDPRESS_DB_HOST\"),getenv(\"WORDPRESS_DB_USER\"),getenv(\"WORDPRESS_DB_PASSWORD\"),getenv(\"WORDPRESS_DB_NAME\")); exit($$db->connect_errno ? 1 : 0);'"]
+      test: ["CMD", "curl", "-f", "http://localhost/wp-login.php"]
       interval: 10s
       timeout: 5s
-      retries: 12
+      retries: 6
       start_period: 30s
+
+  cache:
+    image: redis:7-alpine
+    restart: always
 
   db:
     image: mariadb:10.11
     restart: always
-    command: [
-      "mysqld",
-      "--innodb-buffer-pool-size=${MARIADB_INNODB_BUFFER_POOL_SIZE:-256M}",
-      "--max-connections=${MARIADB_MAX_CONNECTIONS:-100}"
-    ]
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
       MYSQL_DATABASE: ${WORDPRESS_DB_NAME:-wordpress}
@@ -41,5 +40,5 @@ services:
       test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
       interval: 10s
       timeout: 5s
-      retries: 12
+      retries: 6
       start_period: 30s
