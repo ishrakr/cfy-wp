@@ -3,42 +3,37 @@ services:
   php:
     build: .
     restart: always
-    expose:
-      - "80"
     environment:
-      WORDPRESS_DB_HOST: db:3306
-      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER:?Set WORDPRESS_DB_USER in .env}
-      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD:?Set WORDPRESS_DB_PASSWORD in .env}
-      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME:-wordpress}
+      WORDPRESS_DB_HOST: ${WORDPRESS_DB_HOST}
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME}
     volumes:
-      - ./html:/var/www/html
+      - html:/var/www/html
     depends_on:
-      db:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/wp-login.php"]
-      interval: 10s
-      timeout: 5s
-      retries: 6
-      start_period: 30s
-
-  cache:
-    image: redis:7-alpine
-    restart: always
+      - db
+      - cache
 
   db:
     image: mariadb:10.11
     restart: always
+    command: [
+      "mysqld",
+      "--innodb-buffer-pool-size=${MYSQL_INNODB_BUFFER_POOL_SIZE}",
+      "--innodb-log-file-size=${MYSQL_INNODB_LOG_FILE_SIZE}",
+      "--max-connections=${MYSQL_MAX_CONNECTIONS}"
+    ]
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
-      MYSQL_DATABASE: ${WORDPRESS_DB_NAME:-wordpress}
-      MYSQL_USER: ${WORDPRESS_DB_USER:?Set WORDPRESS_DB_USER in .env}
-      MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWORD:?Set WORDPRESS_DB_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${WORDPRESS_DB_NAME}
+      MYSQL_USER: ${WORDPRESS_DB_USER}
+      MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWORD}
     volumes:
-      - ./mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
-      interval: 10s
-      timeout: 5s
-      retries: 6
-      start_period: 30s
+      - mysql_data:/var/lib/mysql
+
+  cache:
+    image: redis:7-alpine
+    restart: always
+    command: ["redis-server", "--maxmemory", "${REDIS_MAXMEMORY}", "--maxmemory-policy", "${REDIS_MAXMEMORY_POLICY}"]
+    volumes:
+      - redis_data:/data
